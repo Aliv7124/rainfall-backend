@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import json
 import random
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -18,12 +19,16 @@ def get_states():
 @app.route("/cities/<state>", methods=["GET"])
 def get_cities(state):
     """Return city names for a given state"""
-    state = state.strip()
-    if state not in state_city_map:
+    state_normalized = state.strip().lower()
+    matched_state = None
+    for s in state_city_map.keys():
+        if s.lower() == state_normalized:
+            matched_state = s
+            break
+    if not matched_state:
         return jsonify({"error": f"State '{state}' not found"}), 404
 
-    # Return list of city names
-    cities = list(state_city_map[state].keys())
+    cities = list(state_city_map[matched_state].keys())
     return jsonify({"cities": cities})
 
 @app.route("/predict", methods=["POST"])
@@ -43,8 +48,12 @@ def predict():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# Only used for local testing
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
+
+
 
 
 
